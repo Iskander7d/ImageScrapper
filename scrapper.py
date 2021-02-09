@@ -5,6 +5,9 @@ from PIL import Image
 import io
 import os
 import hashlib
+import tkinter
+
+
 
 def fetch_image_urls(query: str, max_links_to_fetch: int, wd: webdriver, sleep_between_interactions: int = 1):
     def scroll_to_end(wd):
@@ -63,7 +66,7 @@ def fetch_image_urls(query: str, max_links_to_fetch: int, wd: webdriver, sleep_b
     return image_urls
 
 
-def persist_image(folder_path:str,url:str):
+def persist_image(folder_path:str, url:str):
     try:
         image_content = requests.get(url).content
 
@@ -81,19 +84,56 @@ def persist_image(folder_path:str,url:str):
         print(f"ERROR - Could not save {url} - {e}")
 
 
-def search_and_download(search_term: str, driver_path: str, target_path='./images', number_images=20):
+def search_and_download(search_term: str, driver_path: str, images_count: int, target_path='./images'):
     target_folder = os.path.join(target_path, '_'.join(search_term.lower().split(' ')))
 
     if not os.path.exists(target_folder):
         os.makedirs(target_folder)
 
     with webdriver.Chrome(executable_path=driver_path) as wd:
-        res = fetch_image_urls(search_term, number_images, wd=wd, sleep_between_interactions=1)
+        res = fetch_image_urls(search_term, images_count, wd=wd, sleep_between_interactions=1)
 
     for elem in res:
         persist_image(target_folder, elem)
 
-q = "desktop wallpaper"
-DRIVER_PATH = 'chromedriver.exe'
 
-search_and_download(search_term=q, driver_path=DRIVER_PATH)
+DRIVER_PATH = 'chromedriver.exe'
+#search_term = input('search: ')
+#images_count = int(input('images count: '))
+#search_and_download(search_term=search_term, driver_path=DRIVER_PATH, images_count=images_count)
+
+
+def start_scrapping():
+    search_term = query.get()
+    icount = images_count.get()
+    search_and_download(search_term=search_term, driver_path=DRIVER_PATH, images_count=icount)
+
+
+
+root = tkinter.Tk()
+root.title("ImageScrapper")
+root.geometry("300x125")
+x = (root.winfo_screenwidth() - root.winfo_reqwidth()) / 2
+y = (root.winfo_screenheight() - root.winfo_reqheight()) / 2
+root.wm_geometry("+%d+%d" % (x, y))
+root.minsize(300, 125)
+root.maxsize(600, 250)
+
+text_q = tkinter.Label(text='Search query: ')
+text_q.pack(expand=1)
+
+query = tkinter.StringVar()
+query_entry = tkinter.Entry(textvariable=query)
+query_entry.pack(expand=1)
+
+text_ic = tkinter.Label(text='Images count: ')
+text_ic.pack(expand=1)
+
+images_count = tkinter.IntVar()
+icount_entry = tkinter.Entry(textvariable=images_count)
+icount_entry.pack(expand=1)
+
+button = tkinter.Button(text="Scrap!", command=start_scrapping)
+button.pack(expand=1, padx=10, pady=10)
+
+root.mainloop()
